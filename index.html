@@ -140,3 +140,99 @@
 </body>
 
 </html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recorder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: #f0f0f0;
+        }
+
+        .recorder-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 24px;
+            outline: none;
+        }
+
+        .recorder-button:focus {
+            outline: 2px solid #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Audio Recorder</h1>
+    <p>Press the button below to start recording audio.</p>
+    
+    <button class="recorder-button" aria-label="Start/Stop Recording" id="recordButton">●</button>
+
+    <script>
+        let isRecording = false;
+        const recordButton = document.getElementById('recordButton');
+        let mediaRecorder;
+        let audioChunks = [];
+
+        // Check for browser support
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            console.log('getUserMedia supported.');
+
+            recordButton.addEventListener('click', async () => {
+                if (!isRecording) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        audioChunks = [];
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = audioUrl;
+                        a.download = 'recording.wav';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(audioUrl);
+                    };
+
+                    isRecording = true;
+                    recordButton.textContent = '■'; // Change button to stop symbol
+                } else {
+                    mediaRecorder.stop();
+                    isRecording = false;
+                    recordButton.textContent = '●'; // Change button back to record symbol
+                }
+            });
+        } else {
+            console.error('getUserMedia not supported on your browser!');
+        }
+    </script>
+</body>
+
+</html>
